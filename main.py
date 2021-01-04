@@ -6,6 +6,7 @@ from lxml.etree import iterparse, _Element
 from itertools import islice
 from constants import DUMP_PATH, TAGS, ARTICLE_NAMESPACE, TEMPLATE_NAMESPACE
 import jsons
+import yaml
 
 
 class PageType(Enum):
@@ -106,8 +107,15 @@ with BZ2File(DUMP_PATH) as bz_file:
 
                 templates.append(cur_page)
 
-print(jsons.dump(articles[-1]))
+# print(jsons.dump(articles[-1]))
 
-with open('tmp/templates.json', 'w') as file:
+# Do something with quote chars
+with open('tmp/templates.yml', 'w') as file:
     for article in articles:
-        file.write(jsons.dumps(article))
+        file.write(yaml.dump(article))
+
+
+# with open('tmp/templates.json', 'r') as file:
+#     for line in file:
+#         print(line)
+#         break
