@@ -5,6 +5,7 @@ from enum import Enum, auto
 from lxml.etree import iterparse, _Element
 from itertools import islice
 from constants import DUMP_PATH, TAGS, ARTICLE_NAMESPACE, TEMPLATE_NAMESPACE
+import jsons
 
 
 class PageType(Enum):
@@ -73,7 +74,7 @@ def process_template(page: _Element):
 articles = []
 templates = []
 with BZ2File(DUMP_PATH) as bz_file:
-    for _, element in islice(iterparse(bz_file), 100000):
+    for _, element in islice(iterparse(bz_file), 1000):
 
         if is_element_page(element) and not is_redirect(element):
 
@@ -105,4 +106,8 @@ with BZ2File(DUMP_PATH) as bz_file:
 
                 templates.append(cur_page)
 
-print(len(templates))
+print(jsons.dump(articles[-1]))
+
+with open('tmp/templates.json', 'w') as file:
+    for article in articles:
+        file.write(jsons.dumps(article))
