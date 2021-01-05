@@ -1,36 +1,45 @@
 from bz2 import BZ2File
 import re
-from dataclasses import dataclass
-from enum import Enum, auto
+from typing import NoReturn
 from lxml.etree import iterparse, _Element
+from tqdm import tqdm
+import pathlib
 from itertools import islice
-from constants import DUMP_PATH, TAGS, ARTICLE_NAMESPACE, TEMPLATE_NAMESPACE
-import jsons
-import yaml
+from typing import Union
+from constants import DUMP_PATH, TAGS, ARTICLE_NAMESPACE, TEMPLATE_NAMESPACE,\
+                      TMP_PATH, PROCESS_ARTICLES, PROCESS_TEMPLATES, TOTAL_LINES
+from src.data import Article, Template
 
 
-class PageType(Enum):
-    template = auto()
-    article = auto()
-    other = auto()
+def store_raw_wiki(page: Union[Article, Template]) -> NoReturn:
+    if isinstance(wiki_page, Article):
+        sub_folder: str = "proper" if page.is_proper else "other"
+        path: pathlib.Path = pathlib.Path(f"{TMP_PATH}articles/{sub_folder}/")
+    elif isinstance(wiki_page, Template):
+        path: pathlib.Path = pathlib.Path(f"{TMP_PATH}templates/")
+    else:
+        raise NotImplementedError
+
+    path.mkdir(parents=True, exist_ok=True)
+
+    path = path.joinpath(f"{page.id_}.tmp")
+    with open(path, "w") as file:
+        file.write(page.raw_wiki)
 
 
-@dataclass
-class Page:
-    page_id: int
-    page_title: str
-    page_type: PageType
-    raw_wiki: str
-
-
-def is_title_ru(title: str) -> bool:
+def is_article_title_ru(title: str) -> bool:
     pattern = re.compile(r"^[А-Яа-яЁё\-]+[^\-]$")
     return bool(re.match(pattern, title))
 
 
-def is_template_ru(title: str) -> bool:
-    pattern = re.compile(r"^Шаблон:.+ru.+$")
-    return bool(re.match(pattern, title))
+def is_template(page: _Element) -> bool:
+    return page.find(TAGS["namespace"]).text == TEMPLATE_NAMESPACE
+
+
+def is_template_title_ru(title: str) -> bool:
+    pattern = re.compile(r"^Шаблон:.*ru.*$")
+    return (bool(re.match(pattern, title))
+            and "User" not in title)
 
 
 def is_redirect(page: _Element) -> bool:
@@ -44,8 +53,8 @@ def is_article(page: _Element) -> bool:
     return page.find(TAGS["namespace"]).text == ARTICLE_NAMESPACE
 
 
-def is_template(page: _Element) -> bool:
-    return page.find(TAGS["namespace"]).text == TEMPLATE_NAMESPACE
+def is_article_title_proper(title: str) -> bool:
+    return title.istitle()
 
 
 def is_element_page(elem: _Element) -> bool:
@@ -64,58 +73,37 @@ def get_page_title(page: _Element) -> str:
     return page.find(TAGS["title"]).text
 
 
-def process_article(page: _Element):
-    pass
-
-
-def process_template(page: _Element):
-    pass
-
-
-articles = []
-templates = []
 with BZ2File(DUMP_PATH) as bz_file:
-    for _, element in islice(iterparse(bz_file), 1000):
+    # for _, element in islice(iterparse(bz_file), 5000000):
+    for _, element in tqdm(iterparse(bz_file),
+                           total=TOTAL_LINES):
 
         if is_element_page(element) and not is_redirect(element):
 
-            page_id = get_page_id(element)
-            page_title = get_page_title(element)
-            raw_wiki = get_raw_wiki(element)
+            wiki_page = None
 
-            if is_article(element):
-                page_type = PageType.article
+            cur_id = get_page_id(element)
+            cur_title = get_page_title(element)
+            cur_wiki = get_raw_wiki(element)
 
-            elif is_template(element):
-                page_type = PageType.template
+            if is_article(element) and is_article_title_ru(cur_title) and PROCESS_ARTICLES:
+
+                is_proper: bool = is_article_title_proper(cur_title)
+
+                wiki_page = Article(id_=cur_id,
+                                    title=cur_title,
+                                    raw_wiki=cur_wiki,
+                                    is_proper=is_proper)
+
+            elif is_template(element) and is_template_title_ru(cur_title) and PROCESS_TEMPLATES:
+
+                wiki_page = Template(id_=cur_id,
+                                     title=cur_title,
+                                     raw_wiki=cur_wiki)
 
             else:
-                page_type = PageType.other
+                pass
 
-            cur_page = Page(page_id,
-                            page_title,
-                            page_type,
-                            raw_wiki)
+            if wiki_page:
+                store_raw_wiki(wiki_page)
 
-            if (cur_page.page_type == PageType.article
-                    and is_title_ru(cur_page.page_title)):
-
-                articles.append(cur_page)
-
-            elif (cur_page.page_type == page_type.template
-                  and is_template_ru(cur_page.page_title)):
-
-                templates.append(cur_page)
-
-# print(jsons.dump(articles[-1]))
-
-# Do something with quote chars
-with open('tmp/templates.yml', 'w') as file:
-    for article in articles:
-        file.write(yaml.dump(article))
-
-
-# with open('tmp/templates.json', 'r') as file:
-#     for line in file:
-#         print(line)
-#         break
