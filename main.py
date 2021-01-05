@@ -76,7 +76,7 @@ def get_page_title(page: _Element) -> str:
 with BZ2File(DUMP_PATH) as bz_file:
     # for _, element in islice(iterparse(bz_file), 5000000):
     for _, element in tqdm(iterparse(bz_file),
-                           total=TOTAL_LINES):
+                           total=TOTAL_LINES):  # inaccurate
 
         if is_element_page(element) and not is_redirect(element):
 
@@ -106,4 +106,7 @@ with BZ2File(DUMP_PATH) as bz_file:
 
             if wiki_page:
                 store_raw_wiki(wiki_page)
+
+            # Runs out of memory otherwise
+            element.clear()
 
