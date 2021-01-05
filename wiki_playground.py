@@ -9,7 +9,6 @@ from tqdm import tqdm
 import json
 
 
-
 paths = list(pathlib.Path("tmp/articles/other").joinpath().glob("*.tmp"))
 total = len(paths)
 
@@ -56,7 +55,8 @@ def find_segments(templates: List[Template]) -> Union[Template, None]:
 def parse_segments(temp: Template) -> Dict[str, str]:
     assert "морфо-ru" in temp.name
     args = temp.arguments
-    assert len(args) > 0
+    if not len(args) > 0:
+        return None
     segments = {segment.name: segment.value for segment in args}
     return segments
 
@@ -71,7 +71,7 @@ def parse_ru_section(section: Section):
     if not segments:
         return None
     segments = parse_segments(segments)
-    if len(segments) == 1 and segments["1"] == "":
+    if not segments or len(segments) == 1 and segments["1"] == "":
         return None
     return {
         "morpho": morpho,
