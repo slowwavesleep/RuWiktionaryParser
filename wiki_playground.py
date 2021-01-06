@@ -52,7 +52,7 @@ def find_segments(templates: List[Template]) -> Union[Template, None]:
         return None
 
 
-def parse_segments(temp: Template) -> Dict[str, str]:
+def parse_segments(temp: Template) -> Union[Dict[str, str], None]:
     assert "морфо-ru" in temp.name
     args = temp.arguments
     if not len(args) > 0:
@@ -61,7 +61,7 @@ def parse_segments(temp: Template) -> Dict[str, str]:
     return segments
 
 
-def parse_ru_section(section: Section):
+def parse_ru_section(section: Section) -> Union[Dict[str], None]:
     section = find_ru_morpho_section(section)
     if not section or not section.templates:
         return None

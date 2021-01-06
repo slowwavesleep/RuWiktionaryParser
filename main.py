@@ -69,22 +69,27 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
         return wiki_page
 
 
-with BZ2File(DUMP_PATH) as bz_file:
+def parse_dump(dump_path):
 
-    index2title = dict()
+    with BZ2File(dump_path) as bz_file:
 
-    for index, (_, elem) in enumerate(iterparse(bz_file)):
+        index2title = dict()
 
-        if index % 100000 == 0:
-            print("\r" + f"Processed {index} XML elements...", end="")
+        for index, (_, elem) in enumerate(iterparse(bz_file)):
 
-        processed_page = process_element(elem)
+            if index % 100000 == 0:
+                print("\r" + f"Processed {index} XML elements...", end="")
 
-        if processed_page:
-            index2title[processed_page.id_] = processed_page.title
-            store_raw_wiki(processed_page)
+            processed_page = process_element(elem)
 
-    store_index2title(index2title)
+            if processed_page:
+                index2title[processed_page.id_] = processed_page.title
+                store_raw_wiki(processed_page)
 
-    print("\n" + f"Finished processing {index} elements!")
+        store_index2title(index2title)
+
+        print("\n" + f"Finished processing {index} elements!")
+
+
+parse_dump(DUMP_PATH)
 
