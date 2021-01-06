@@ -9,15 +9,16 @@ from tqdm import tqdm
 import json
 
 
-paths = list(pathlib.Path("tmp/articles/other").joinpath().glob("*.tmp"))
+paths = list(pathlib.Path("tmp/articles/other").joinpath().glob("*"))
 total = len(paths)
+
 
 PARSED_PATH = "tmp/parsed.json"
 
 
 def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
     sections = wiki_text.get_sections()
-    sections = [section for section in sections if section.level == 1 and '{{-ru-}}' in section.title]
+    sections = [sec for sec in sections if sec.level == 1 and '{{-ru-}}' in sec.title]
     if len(sections) == 1:
         return sections[0]
     else:
@@ -26,7 +27,7 @@ def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
 
 def find_ru_morpho_section(wiki_text: WikiText) -> Union[Section, None]:
     sections = wiki_text.get_sections()
-    sections = [section for section in sections if 'Морфологические и синтаксические свойства' in str(section.title)]
+    sections = [sec for sec in sections if 'Морфологические и синтаксические свойства' in str(sec.title)]
     if len(sections) == 1:
         return sections[0]
     else:
@@ -61,13 +62,13 @@ def parse_segments(temp: Template) -> Union[Dict[str, str], None]:
     return segments
 
 
-def parse_ru_section(section: Section) -> Union[Dict[str], None]:
-    section = find_ru_morpho_section(section)
-    if not section or not section.templates:
+def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
+    wiki_section = find_ru_morpho_section(wiki_section)
+    if not wiki_section or not wiki_section.templates:
         return None
-    section = section.templates
-    morpho = parse_morpho(section[0])
-    segments = find_segments(section)
+    wiki_section = wiki_section.templates
+    morpho = parse_morpho(wiki_section[0])
+    segments = find_segments(wiki_section)
     if not segments:
         return None
     segments = parse_segments(segments)
@@ -89,6 +90,7 @@ for path in tqdm(paths, total=total):
         if section:
             section = parse_ru_section(section)
             if section:
+
                 parsed.append(section)
         else:
             pass
@@ -97,7 +99,8 @@ for path in tqdm(paths, total=total):
 with open(PARSED_PATH, "w") as file:
     json.dump(parsed, file, indent=4)
 
-# with open(PARSED_PATH) as file:
-#     test = json.load(file)
-#
-# print(test)
+with open(PARSED_PATH) as file:
+    test = json.load(file)
+
+print(test)
+
