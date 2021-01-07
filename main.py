@@ -6,7 +6,7 @@ import json
 from typing import Union
 from config import DUMP_PATH, TMP_PATH, PROCESS_ARTICLES, PROCESS_TEMPLATES
 from src.data import Article, Template
-from src.xml_utils import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
+from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title
 
 
