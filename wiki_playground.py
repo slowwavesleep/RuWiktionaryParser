@@ -26,11 +26,11 @@ for path in tqdm(paths, total=total):
         section = find_ru_section(data)
 
         if section:
-            section = parse_ru_section(section)
-            if section:
-                section["title"] = article_title
-                section["id"] = article_id
-                parsed.append(section)
+            parsed_section = parse_ru_section(section)
+            if parsed_section:
+                parsed_section["title"] = article_title
+                parsed_section["id"] = article_id
+                parsed.append(parsed_section)
         else:
             pass
 

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 
-
 @dataclass
-class WikiPage:
+class BaseWikiPage:
     id_: int
     title: str
+
+@dataclass
+class WikiPage(BaseWikiPage):
     raw_wiki: str
 
 
