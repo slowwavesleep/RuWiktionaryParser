@@ -1,8 +1,8 @@
-import multiprocessing as mp
+from multiprocessing import Queue, Process
 from bz2 import BZ2File
 from lxml.etree import iterparse, _Element
 from itertools import islice
-from typing import Union
+from typing import Union, Dict, NoReturn
 import wikitextparser as wtp
 from timeit import default_timer as timer
 import json
@@ -55,11 +55,11 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
         return wiki_page
 
 
-def parse_dump(dump_path, conn):
+def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
 
     with BZ2File(dump_path) as bz_file:
 
-        for index, (_, elem) in enumerate(islice(iterparse(bz_file), 1000000)):
+        for index, (_, elem) in enumerate(iterparse(bz_file)):
 
             if index % 100000 == 0:
                 print("\r" + f"Processed {index} XML elements...", end="")
@@ -72,7 +72,7 @@ def parse_dump(dump_path, conn):
         print("\n" + f"Total elements processed: {index}")
 
 
-def parse_wiki(in_conn, out_conn):
+def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
 
     while True:
 
@@ -101,7 +101,13 @@ def parse_wiki(in_conn, out_conn):
                 out_conn.put(parsed_ru_section)
 
 
-def write_result(paths, conn):
+def empty_file(path: str) -> NoReturn:
+    open(path, "w").close()
+
+
+def write_result(paths: dict, conn: Queue):
+    for _, path in paths.items():
+        empty_file(path)
     while True:
         data: Union[dict, str] = conn.get()
         if data == "STOP":
@@ -117,11 +123,11 @@ if __name__ == "__main__":
 
     start = timer()
 
-    task_queue = mp.Queue()
-    write_queue = mp.Queue()
+    task_queue = Queue()
+    write_queue = Queue()
 
-    wiki_process = mp.Process(target=parse_wiki, args=(task_queue, write_queue))
-    write_process = mp.Process(target=write_result, args=(WRITE_PATHS, write_queue))
+    wiki_process = Process(target=parse_wiki, args=(task_queue, write_queue))
+    write_process = Process(target=write_result, args=(WRITE_PATHS, write_queue))
 
     wiki_process.start()
     write_process.start()
