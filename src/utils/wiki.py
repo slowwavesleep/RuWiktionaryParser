@@ -2,6 +2,7 @@ from typing import Union, Dict, List
 
 from wikitextparser import Section, Template
 from wikitextparser._wikitext import WikiText
+import re
 
 
 def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
@@ -22,10 +23,21 @@ def find_ru_morpho_section(wiki_text: WikiText) -> Union[Section, None]:
         return None
 
 
+def clean_template_name(template: str) -> str:
+    template = template.replace("Шаблон:", "").strip("\n").strip()
+
+    # comment = re.compile(r"<!--.*?-->")
+    # template = comment.sub("", template)
+
+    whitespace = re.compile(r"\s+")
+    template = whitespace.sub(" ", template)
+    return template.strip()
+
+
 def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
-    temp_name = temp.name.strip('\n')
+    temp_name = clean_template_name(temp.name)
     args = temp.arguments
-    stems = {arg.name.strip('\n'): arg.value.strip('\n')
+    stems = {arg.name.strip("\n"): arg.value.strip("\n")
              for arg in args if "основа" in arg.name}
     return {
         "template": temp_name,

@@ -29,9 +29,14 @@ for item in templates:
     if item not in found:
         missing.append(item)
 
+
 # TODO
-# Remove wiki comments, strip newline,
-for item in missing:
-    print(item)
-# print(len(templates))
-# pprint(templates.most_common())
+# Remove wiki comments, strip newline, strip spaces, double whitespace
+# for item in missing:
+#     print(item)
+print(missing)
+print(len(templates))
+print(len(missing))
+pprint(templates.most_common())
+
+
