@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class BaseWikiPage:
     id_: int
     title: str
+
 
 @dataclass
 class WikiPage(BaseWikiPage):
@@ -18,3 +20,11 @@ class Article(WikiPage):
 @dataclass
 class Template(WikiPage):
     pass
+
+
+# @dataclass
+# class ParsedArticleMorpho(BaseWikiPage):
+#     template: str
+#     stems: dict
+#     segments: dict
+
