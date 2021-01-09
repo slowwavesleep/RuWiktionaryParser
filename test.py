@@ -14,6 +14,12 @@ with open(PARSED_PATH) as file:
     for line in file:
         test = json.loads(line)
         if not test["is_proper"]:
+            if test["morpho"]["template"] == "^":
+                print(test)
+            if test["morpho"]["template"] == "числ-5":
+                print(test)
+            if test["morpho"]["template"] == "мест ru п6*a":
+                print(test)
             templates.update([test["morpho"]["template"]])
 
 paths = list(pathlib.Path("tmp/templates").joinpath().glob("*"))
@@ -32,8 +38,11 @@ for item in templates:
 
 # TODO
 # Remove wiki comments, strip newline, strip spaces, double whitespace
+# DON'T IGNORE REDIRECTS FOR TEMPLATES
 # for item in missing:
 #     print(item)
+# TODO
+# Actually deal with templates
 print(missing)
 print(len(templates))
 print(len(missing))

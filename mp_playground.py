@@ -8,10 +8,10 @@ from timeit import default_timer as timer
 import json
 
 from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
-from src.data import Article, Template
+from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
-    is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title
-from src.utils.wiki import find_ru_section, parse_ru_section
+    is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
+from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name
 
 
 WRITE_PATHS = {
@@ -25,13 +25,16 @@ NUM_PROCESSES = max(min(4, CPU_COUNT - 2), 1)
 
 def process_element(element: _Element) -> Union[Article, Template, None]:
 
-    if is_element_page(element) and not is_redirect(element):
+    if is_element_page(element):
 
         cur_id = get_page_id(element)
         cur_title = get_page_title(element)
         cur_wiki = get_raw_wiki(element)
 
-        if is_article(element) and is_article_title_ru(cur_title) and PROCESS_ARTICLES:
+        if (is_article(element)
+                and is_article_title_ru(cur_title)
+                and not is_redirect(element)
+                and PROCESS_ARTICLES):
 
             is_proper: bool = is_article_title_proper(cur_title)
 
@@ -40,11 +43,29 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
                                 raw_wiki=cur_wiki,
                                 is_proper=is_proper)
 
-        elif is_template(element) and is_template_title_ru(cur_title) and PROCESS_TEMPLATES:
+        elif (is_template(element)
+              and is_template_title_ru(cur_title)
+              and not is_redirect(element)
+              and PROCESS_TEMPLATES):
 
             wiki_page = Template(id_=cur_id,
                                  title=cur_title,
                                  raw_wiki=cur_wiki)
+
+        elif (is_template(element)
+              and is_template_title_ru(cur_title)
+              and is_redirect(element)
+              and PROCESS_TEMPLATES):
+
+            redirect_title = get_redirect_title(element)
+            redirect_title = clean_template_name(redirect_title)
+
+            wiki_page = TemplateRedirect(id_=cur_id,
+                                         title=cur_title,
+                                         raw_wiki=cur_wiki,
+                                         redirect_title=redirect_title)
+
+            print("\n", wiki_page)
 
         else:
             wiki_page = None

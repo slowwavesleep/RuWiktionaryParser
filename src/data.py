@@ -22,9 +22,13 @@ class Template(WikiPage):
     pass
 
 
-# @dataclass
-# class ParsedArticleMorpho(BaseWikiPage):
-#     template: str
-#     stems: dict
-#     segments: dict
+@dataclass
+class Redirect(WikiPage):
+    redirect_title: str
+
+
+@dataclass
+class TemplateRedirect(Redirect):
+    pass
+
 
