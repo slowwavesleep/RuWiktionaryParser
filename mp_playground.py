@@ -1,4 +1,4 @@
-from multiprocessing import Queue, Process
+from multiprocessing import Queue, Process, cpu_count
 from bz2 import BZ2File
 from lxml.etree import iterparse, _Element
 from itertools import islice
@@ -18,6 +18,9 @@ WRITE_PATHS = {
     "template": "tmp/templates.json",
     "article": "tmp/articles.json"
 }
+
+CPU_COUNT = cpu_count()
+NUM_PROCESSES = max(min(4, CPU_COUNT - 2), 1)
 
 
 def process_element(element: _Element) -> Union[Article, Template, None]:
@@ -68,7 +71,9 @@ def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
             if processed_page:
                 conn.put(processed_page)
 
-        conn.put('STOP')
+        for _ in range(NUM_PROCESSES):
+            conn.put('STOP')
+
         print("\n" + f"Total elements processed: {index}")
 
 
@@ -79,7 +84,8 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
         data: Union[Article, Template, str] = in_conn.get()
 
         if data == "STOP":
-            out_conn.put(data)
+            for _ in range(NUM_PROCESSES):
+                out_conn.put(data)
             break
 
         wiki = wtp.parse(data.raw_wiki)
@@ -126,15 +132,18 @@ if __name__ == "__main__":
     task_queue = Queue()
     write_queue = Queue()
 
-    wiki_process = Process(target=parse_wiki, args=(task_queue, write_queue))
+    wiki_process = [Process(target=parse_wiki, args=(task_queue, write_queue)) for _ in range(NUM_PROCESSES)]
     write_process = Process(target=write_result, args=(WRITE_PATHS, write_queue))
 
-    wiki_process.start()
+    for process in wiki_process:
+        process.start()
+
     write_process.start()
 
     parse_dump(DUMP_PATH, task_queue)
 
-    wiki_process.join()
+    for process in wiki_process:
+        process.join()
     write_process.join()
 
     end = timer()
