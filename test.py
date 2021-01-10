@@ -3,6 +3,7 @@ from pprint import pprint
 from collections import Counter
 import pathlib
 
+
 PARSED_PATH = "tmp/articles.json"
 
 templates = Counter()
@@ -46,5 +47,5 @@ for item in templates:
 print(missing)
 print(len(templates))
 print(len(missing))
-pprint(templates.most_common())
+# pprint(templates.most_common())
 

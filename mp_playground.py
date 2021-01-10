@@ -11,25 +11,26 @@ from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
 from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
-from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name
+from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template
 
 
 WRITE_PATHS = {
     "template": "tmp/templates.json",
-    "article": "tmp/articles.json"
+    "article": "tmp/articles.json",
+    "template_redirect": "tmp/template_redirects.json"
 }
 
-CPU_COUNT = cpu_count()
-NUM_PROCESSES = max(min(4, CPU_COUNT - 2), 1)
+assert cpu_count() > 4
+NUM_PROCESSES = 4
 
 
 def process_element(element: _Element) -> Union[Article, Template, None]:
 
     if is_element_page(element):
 
-        cur_id = get_page_id(element)
-        cur_title = get_page_title(element)
-        cur_wiki = get_raw_wiki(element)
+        cur_id: int = get_page_id(element)
+        cur_title: str = get_page_title(element)
+        cur_wiki: str = get_raw_wiki(element)
 
         if (is_article(element)
                 and is_article_title_ru(cur_title)
@@ -48,6 +49,8 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
               and not is_redirect(element)
               and PROCESS_TEMPLATES):
 
+            cur_title: str = clean_template_name(cur_title)
+
             wiki_page = Template(id_=cur_id,
                                  title=cur_title,
                                  raw_wiki=cur_wiki)
@@ -57,15 +60,15 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
               and is_redirect(element)
               and PROCESS_TEMPLATES):
 
-            redirect_title = get_redirect_title(element)
-            redirect_title = clean_template_name(redirect_title)
+            cur_title: str = clean_template_name(cur_title)
+
+            redirect_title: str = get_redirect_title(element)
+            redirect_title: str = clean_template_name(redirect_title)
 
             wiki_page = TemplateRedirect(id_=cur_id,
                                          title=cur_title,
                                          raw_wiki=cur_wiki,
                                          redirect_title=redirect_title)
-
-            print("\n", wiki_page)
 
         else:
             wiki_page = None
@@ -109,23 +112,40 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                 out_conn.put(data)
             break
 
-        wiki = wtp.parse(data.raw_wiki)
-        ru_section = find_ru_section(wiki)
+        wiki_data = wtp.parse(data.raw_wiki)
 
-        if ru_section:
-            parsed_ru_section = parse_ru_section(ru_section)
-            if parsed_ru_section:
-                parsed_ru_section["id"] = data.id_
-                parsed_ru_section["title"] = data.title
-                if isinstance(data, Article):
-                    parsed_ru_section["type"] = "article"
-                    parsed_ru_section["is_proper"] = data.is_proper
-                elif isinstance(data, Template):
-                    parsed_ru_section["type"] = "template"
-                else:
-                    parsed_ru_section["type"] = "other"
+        if isinstance(data, Article):
 
-                out_conn.put(parsed_ru_section)
+            wiki_data = find_ru_section(wiki_data)
+
+            if wiki_data:
+                parsed_wiki_data = parse_ru_section(wiki_data)
+                if parsed_wiki_data:
+                    parsed_wiki_data["id"] = data.id_
+                    parsed_wiki_data["title"] = data.title
+                    parsed_wiki_data["type"] = "article"
+                    parsed_wiki_data["is_proper"] = data.is_proper
+
+                    out_conn.put(parsed_wiki_data)
+
+        elif isinstance(data, Template):
+            parsed_wiki_data = parse_template(wiki_data)
+            parsed_wiki_data["id"] = data.id_
+            parsed_wiki_data["title"] = data.title
+            parsed_wiki_data["type"] = "template"
+
+            out_conn.put(parsed_wiki_data)
+        elif isinstance(data, TemplateRedirect):
+            parsed_wiki_data = {
+                "id": data.id_,
+                "title": data.title,
+                "redirect_title": data.redirect_title,
+                "type": "template_redirect"
+            }
+
+            out_conn.put(parsed_wiki_data)
+        else:
+            pass
 
 
 def empty_file(path: str) -> NoReturn:

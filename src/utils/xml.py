@@ -52,4 +52,4 @@ def get_page_title(page: _Element) -> str:
 
 
 def get_redirect_title(page: _Element) -> str:
-    return page.find(TAGS["title"]).text
+    return page.find(TAGS["redirect"]).get("title")

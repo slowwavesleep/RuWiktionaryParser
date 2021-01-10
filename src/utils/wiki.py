@@ -78,3 +78,7 @@ def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
         "morpho": morpho,
         "segments": segments
     }
+
+
+def parse_template(wiki_text: WikiText):
+    return {"template": "template content"}
