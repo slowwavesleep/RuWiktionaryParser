@@ -11,7 +11,8 @@ from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
 from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
-from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template
+from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template_page, \
+    remove_no_include
 
 
 WRITE_PATHS = {
@@ -112,10 +113,8 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                 out_conn.put(data)
             break
 
-        wiki_data = wtp.parse(data.raw_wiki)
-
         if isinstance(data, Article):
-
+            wiki_data = wtp.parse(data.raw_wiki)
             wiki_data = find_ru_section(wiki_data)
 
             if wiki_data:
@@ -129,12 +128,16 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                     out_conn.put(parsed_wiki_data)
 
         elif isinstance(data, Template):
-            parsed_wiki_data = parse_template(wiki_data)
-            parsed_wiki_data["id"] = data.id_
-            parsed_wiki_data["title"] = data.title
-            parsed_wiki_data["type"] = "template"
+            wiki_data = wtp.parse(remove_no_include(data.raw_wiki))
+            if wiki_data:
+                parsed_wiki_data = parse_template_page(wiki_data)
+                if parsed_wiki_data:
+                    parsed_wiki_data["id"] = data.id_
+                    parsed_wiki_data["title"] = data.title
+                    parsed_wiki_data["type"] = "template"
 
-            out_conn.put(parsed_wiki_data)
+                    out_conn.put(parsed_wiki_data)
+
         elif isinstance(data, TemplateRedirect):
             parsed_wiki_data = {
                 "id": data.id_,

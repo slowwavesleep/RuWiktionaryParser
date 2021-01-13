@@ -80,5 +80,29 @@ def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
     }
 
 
-def parse_template(wiki_text: WikiText):
-    return {"template": "template content"}
+def parse_template_page(wiki_text: WikiText) -> Union[dict, None]:
+    templates = wiki_text.templates
+    if not templates:
+        return None
+    if len(templates) > 1:
+        print("Unusual template")
+        return None
+    template = templates[0]
+    return {"template": template_to_dict(template)}
+
+
+def remove_no_include(raw_template_page: str) -> str:
+    pattern = re.compile(r"^<noinclude>.*?</noinclude>$")
+    lines = raw_template_page.split("\n")
+    output = []
+    for line in lines:
+        if not bool(re.match(pattern, line)):
+            output.append(line)
+    return "\n".join(output)
+
+
+def template_to_dict(template: Template) -> dict:
+    output = {}
+    for arg in template.arguments:
+        output[arg.name.strip()] = arg.value.strip("\n")
+    return output
