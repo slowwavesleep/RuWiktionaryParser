@@ -2,7 +2,8 @@ import re
 
 from lxml.etree import Element
 
-from config import TAGS, TEMPLATE_NAMESPACE, ARTICLE_NAMESPACE
+from config import TAGS
+from constants import ARTICLE_NAMESPACE, TEMPLATE_NAMESPACE
 
 
 def is_article_title_ru(title: str) -> bool:
