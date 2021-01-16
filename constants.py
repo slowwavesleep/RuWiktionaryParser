@@ -3,3 +3,7 @@ WRITE_PATHS = {
     "article": "tmp/articles.json",
     "template_redirect": "tmp/template_redirects.json"
 }
+
+SPECIAL_TEMPLATES = [
+    "сущ-ru"
+]

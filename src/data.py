@@ -30,5 +30,3 @@ class Redirect(WikiPage):
 @dataclass
 class TemplateRedirect(Redirect):
     pass
-
-

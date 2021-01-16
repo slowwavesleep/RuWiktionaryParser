@@ -1,6 +1,6 @@
 from multiprocessing import Queue, Process, cpu_count
 from bz2 import BZ2File
-from lxml.etree import iterparse, _Element
+from lxml.etree import iterparse, Element
 from typing import Union, NoReturn
 from timeit import default_timer as timer
 import json
@@ -19,7 +19,7 @@ assert cpu_count() > 4
 NUM_PROCESSES = 4
 
 
-def process_element(element: _Element) -> Union[Article, Template, None]:
+def process_element(element: Element) -> Union[Article, Template, None]:
 
     if is_element_page(element):
 
