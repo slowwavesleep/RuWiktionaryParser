@@ -1,25 +1,19 @@
 from multiprocessing import Queue, Process, cpu_count
 from bz2 import BZ2File
 from lxml.etree import iterparse, _Element
-from itertools import islice
-from typing import Union, Dict, NoReturn
-import wikitextparser as wtp
+from typing import Union, NoReturn
 from timeit import default_timer as timer
 import json
 
+import wikitextparser as wtp
+
 from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
+from constants import WRITE_PATHS
 from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
 from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template_page, \
     remove_no_include
-
-
-WRITE_PATHS = {
-    "template": "tmp/templates.json",
-    "article": "tmp/articles.json",
-    "template_redirect": "tmp/template_redirects.json"
-}
 
 assert cpu_count() > 4
 NUM_PROCESSES = 4
@@ -84,15 +78,13 @@ def process_element(element: _Element) -> Union[Article, Template, None]:
 
 
 def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
-
     with BZ2File(dump_path) as bz_file:
-
         for index, (_, elem) in enumerate(iterparse(bz_file)):
-
             if index % 100000 == 0:
                 print("\r" + f"Processed {index} XML elements...", end="")
 
             processed_page = process_element(elem)
+
             if processed_page:
                 conn.put(processed_page)
 
@@ -103,11 +95,8 @@ def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
 
 
 def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
-
     while True:
-
         data: Union[Article, Template, str] = in_conn.get()
-
         if data == "STOP":
             for _ in range(NUM_PROCESSES):
                 out_conn.put(data)
@@ -164,6 +153,7 @@ def write_result(paths: dict, conn: Queue):
             break
         data_type = data["type"]
         path = paths.get(data_type, None)
+        # why both files
         if path:
             with open(path, "a") as file:
                 file.write(json.dumps(data) + "\n")
