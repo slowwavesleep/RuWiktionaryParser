@@ -68,7 +68,7 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     # word `основа` in them, so if no such arguments were
     # found, then these words will be ignored further on
     args = temp.arguments
-    stems = {arg.name.strip("\n"): arg.value.strip("\n")
+    stems = {arg.name.strip("\n").strip(): arg.value.strip("\n")
              for arg in args if "основа" in arg.name}
     return {
         "template": temp_name,
