@@ -100,9 +100,15 @@ def parse_segments(temp: Template) -> Union[Dict[str, str], None]:
     """
     assert "морфо-ru" in temp.name
     args = temp.arguments
+    # some templates are empty and have no arguments
+    # these are useless
     if not len(args) > 0:
         return None
     segments = {segment.name: segment.value for segment in args}
+    # some templates have arguments but no values for them
+    # these are also useless
+    if not any(segments.values()):
+        return None
     return segments
 
 

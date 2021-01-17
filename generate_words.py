@@ -1,18 +1,27 @@
 from string import digits
-from typing import List, Union
+from typing import List, Union, Dict
+from unicodedata import normalize
+import re
 
 
 def clean_string(seg: str) -> str:
+    # TODO Consider complex words with "-"
     """
-    Removes all symbols not part of the Russian alphabet
-    from a given string.
+    Removes all symbols not part of the Russian alphabet from a given string and
+    converts all chars into their composed unicode form.
     :param seg: a string to remove unnecessary symbols from
     :return: a cleaned string
     """
+    # remove optional elements
+    seg = re.sub(r"\(.*?\)", "", seg)
+    # decompose string to filter out stress marks
+    seg = normalize("NFD", seg)
     ru_letters = ({chr(ind) for ind in range(ord("а"), ord("я") + 1)}
                   | {chr(ind) for ind in range(ord("А"), ord("Я") + 1)}
-                  | {"Ё", "ё"})
-    return "".join(c for c in seg if c in ru_letters)
+                  | {"\u0308", "\u0306"}) # this is diacritical marks for letters `й` and `ё`
+    seg = "".join(c for c in seg if c in ru_letters)
+    # convert back to composed form
+    return normalize("NFC", seg)
 
 
 def clean_segments(segments: dict) -> List[str]:
@@ -21,10 +30,16 @@ def clean_segments(segments: dict) -> List[str]:
     :param segments: a raw segments dictionary
     :return: a sorted list of segments
     """
-    return [clean_string(value) for key, value in sorted(segments.items())if key in digits]
+    return [clean_string(value) for key, value in sorted(segments.items())
+            if key in digits and value]
 
 
 def combined_len(segments: List[str]) -> int:
+    """
+    Simple function to check the total length of combined segments.
+    :param segments: a list of segments
+    :return: total amount of symbols
+    """
     return sum(len(seg) for seg in segments)
 
 
@@ -55,7 +70,7 @@ def segment_stem(stem: str, segments: dict) -> Union[List[str], None]:
 
         print(f"Stem: `{stem}` did not match with segments in `{whole_word}`")
     else:
-        print("Different stem")
+        print(f"Different stem: {stem} {whole_word}")
 
 
 def all_stems_filled(stems: dict) -> bool:
@@ -66,7 +81,7 @@ def all_stems_filled(stems: dict) -> bool:
     :return: a boolean value
     """
     if stems and all(stems.values()):
-        assert "основа" in stems.keys()
+        # assert "основа" in stems.keys()
         return True
     else:
         return False
@@ -85,7 +100,16 @@ def some_stems_filled(stems: dict) -> bool:
         return False
 
 
-# segs = {'1': 'воскресеньj', '2': '+е', 'и': 'т'}
-# stem = "воскресе́н"
-#
-# print(segment_stem(stem, segs))
+def replace_template_redirects(article: dict, template_redirects: Dict[str, str]) -> dict:
+    template_name = article["morpho"]["template"]
+    if template_name in template_redirects:
+        article["morpho"]["template"] = template_redirects[template_name]
+    return article
+
+
+def process_articles():
+    # nouns with one stem and no "-"
+    # nouns with multiple stems and no "-"
+    # nouns with "-"
+    pass
+

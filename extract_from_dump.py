@@ -8,7 +8,7 @@ import json
 import wikitextparser as wtp
 
 from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
-from constants import WRITE_PATHS
+from constants import WRITE_PATHS, BROKEN_ARTICLES
 from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
@@ -20,14 +20,17 @@ NUM_PROCESSES = 4
 
 
 def process_element(element: Element) -> Union[Article, Template, None]:
-
     if is_element_page(element):
 
         cur_id: int = get_page_id(element)
         cur_title: str = get_page_title(element)
         cur_wiki: str = get_raw_wiki(element)
 
-        if (is_article(element)
+        # filter out incorrectly formatted articles
+        if cur_title in BROKEN_ARTICLES:
+            wiki_page = None
+
+        elif (is_article(element)
                 and is_article_title_ru(cur_title)
                 and not is_redirect(element)
                 and PROCESS_ARTICLES):
@@ -141,6 +144,10 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
 
 
 def empty_file(path: str) -> NoReturn:
+    """
+    Given a path creates an empty file
+    :param path: file path
+    """
     open(path, "w").close()
 
 
