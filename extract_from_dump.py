@@ -20,6 +20,14 @@ NUM_PROCESSES = 4
 
 
 def process_element(element: Element) -> Union[Article, Template, None]:
+    """
+    Parses an individual XML element. Returns an instance of a corresponding
+    class if successful, None otherwise.
+    Additionally, clears all parent elements of a given element to conserve memory.
+    :param element: XML element
+    :return: an instance of Article or Template class or None
+    """
+    # we're only interested in `page` elements in this dump
     if is_element_page(element):
 
         cur_id: int = get_page_id(element)
@@ -67,12 +75,14 @@ def process_element(element: Element) -> Union[Article, Template, None]:
                                          title=cur_title,
                                          raw_wiki=cur_wiki,
                                          redirect_title=redirect_title)
-
+        # not interested in other cases
         else:
             wiki_page = None
 
+        # remove data from current element
         element.clear()
 
+        # clear all preceding elements
         for ancestor in element.xpath('ancestor-or-self::*'):
             while ancestor.getprevious() is not None:
                 del ancestor.getparent()[0]
@@ -81,6 +91,13 @@ def process_element(element: Element) -> Union[Article, Template, None]:
 
 
 def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
+    """
+    Iteratively goes through a compressed XML dump. Extracts information
+    from page elements. If extraction is successful (i.e. not None), then
+    the processed information is passed on to an output queue.
+    :param dump_path: path leading to the compressed XML dump
+    :param conn: output queue
+    """
     with BZ2File(dump_path) as bz_file:
         for index, (_, elem) in enumerate(iterparse(bz_file)):
             if index % 100000 == 0:
@@ -91,13 +108,24 @@ def parse_dump(dump_path: str, conn: Queue) -> NoReturn:
             if processed_page:
                 conn.put(processed_page)
 
+        # we need to stop each individual process down the line
+        # after we're done parsing the dump
         for _ in range(NUM_PROCESSES):
             conn.put('STOP')
 
+        # total number of elements processed for reference
         print("\n" + f"Total elements processed: {index}")
 
 
 def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
+    """
+    Processes actual wiki text of a given page. Receives data from an input queue
+    and puts results into an output queue.
+    Meant to run in multiple parallel processes.
+    :param in_conn: input queue
+    :param out_conn: output queue
+    """
+    # runs in an infinite cycle until it receives a stop signal
     while True:
         data: Union[Article, Template, str] = in_conn.get()
         if data == "STOP":
@@ -151,7 +179,14 @@ def empty_file(path: str) -> NoReturn:
     open(path, "w").close()
 
 
-def write_result(paths: dict, conn: Queue):
+def write_result(paths: dict, conn: Queue) -> NoReturn:
+    """
+    Receives data from input queue and writes it to a single line
+    in a file. The file path depends on specified data type.
+    :param paths: dictionary containing data types as keys and corresponding
+    paths as values.
+    :param conn: input queue
+    """
     for _, path in paths.items():
         empty_file(path)
     while True:
@@ -160,7 +195,6 @@ def write_result(paths: dict, conn: Queue):
             break
         data_type = data["type"]
         path = paths.get(data_type, None)
-        # why both files
         if path:
             with open(path, "a") as file:
                 file.write(json.dumps(data) + "\n")
