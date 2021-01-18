@@ -13,5 +13,11 @@ SPECIAL_TEMPLATES: List[str] = [
 BROKEN_ARTICLES: List[str] = [
     "ханьжа"
 ]
+
+INVARIABLE_POS = [
+    "adv",
+    "деепр"
+]
+
 ARTICLE_NAMESPACE: str = "0"
 TEMPLATE_NAMESPACE: str = "10"

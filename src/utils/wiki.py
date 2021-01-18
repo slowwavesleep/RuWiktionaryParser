@@ -5,6 +5,7 @@ from wikitextparser import Section, Template
 from wikitextparser import WikiText
 
 
+# TODO Consider synonymy, i.e. multiple sections for one word
 def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
     """
     Attempts to find Russian language section in a given
