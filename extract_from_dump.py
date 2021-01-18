@@ -128,17 +128,20 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
     # runs in an infinite cycle until it receives a stop signal
     while True:
         data: Union[Article, Template, str] = in_conn.get()
+        # upon receiving the stop signal
+        # pass it further down the line and break the infinite cycle
         if data == "STOP":
-            for _ in range(NUM_PROCESSES):
-                out_conn.put(data)
+            out_conn.put(data)
             break
-
+        # parse the article type
         if isinstance(data, Article):
             wiki_data = wtp.parse(data.raw_wiki)
             wiki_data = find_ru_section(wiki_data)
-
+            # proceed if Russian language section is found
             if wiki_data:
+                # parse found section
                 parsed_wiki_data = parse_ru_section(wiki_data)
+                # proceed if morphological information and segmentation data were found
                 if parsed_wiki_data:
                     parsed_wiki_data["id"] = data.id_
                     parsed_wiki_data["title"] = data.title
@@ -146,7 +149,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                     parsed_wiki_data["is_proper"] = data.is_proper
 
                     out_conn.put(parsed_wiki_data)
-
+        # Template class contains data from a page dedicated to a particular template
         elif isinstance(data, Template):
             wiki_data = wtp.parse(remove_no_include(data.raw_wiki))
             if wiki_data:
@@ -157,8 +160,11 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                     parsed_wiki_data["type"] = "template"
 
                     out_conn.put(parsed_wiki_data)
-
+        # we're interested only in template redirects
+        # those are essentially aliases for template names
+        # although only one page contains data
         elif isinstance(data, TemplateRedirect):
+            # here we don't actually need any wiki data from the page body
             parsed_wiki_data = {
                 "id": data.id_,
                 "title": data.title,
@@ -167,6 +173,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
             }
 
             out_conn.put(parsed_wiki_data)
+        # not interested in any other cases
         else:
             pass
 
@@ -201,22 +208,25 @@ def write_result(paths: dict, conn: Queue) -> NoReturn:
 
 
 if __name__ == "__main__":
-
+    # to check total time elapsed
     start = timer()
-
+    # create necessary queues
     task_queue = Queue()
     write_queue = Queue()
 
+    # wiki pages are completely independent of each other (except morphological templates, but we'll deal
+    # with them separately), so it makes sense to parallelize their parsing
     wiki_process = [Process(target=parse_wiki, args=(task_queue, write_queue)) for _ in range(NUM_PROCESSES)]
+    # this can be also done independently of XML and wiki parsing
     write_process = Process(target=write_result, args=(WRITE_PATHS, write_queue))
-
+    # start all the processes
     for process in wiki_process:
         process.start()
 
     write_process.start()
-
+    # run the main function
     parse_dump(DUMP_PATH, task_queue)
-
+    # close the processes
     for process in wiki_process:
         process.join()
     write_process.join()

@@ -55,7 +55,7 @@ def clean_template_name(template: str) -> str:
 def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     """
     Extracts template name and stems for a given word from a
-    parsed wikitext template.
+    parsed wikitext morphology template.
     :param temp: an instance of wikitextparser Template class
     :return: a dictionary containing template name and stems
     """
@@ -113,15 +113,35 @@ def parse_segments(temp: Template) -> Union[Dict[str, str], None]:
 
 
 def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
+    """
+    Processes the entire Russian language section of an article.
+    Return a dictionary with morphological information and morpheme segmentation.
+    :param wiki_section: a wiki text section in Russian language
+    :return: a dictionary with relevant information or None
+    """
+    # try to find morphological section
+    # generally, it should be present in all articles
     wiki_section = find_ru_morpho_section(wiki_section)
+    # return None if no such section was found or if
+    # it contains no templates
     if not wiki_section or not wiki_section.templates:
         return None
+    # deal with templates found
     wiki_section = wiki_section.templates
+    # the morphological template should be the first one
+    # in the relevant section; it cannot be identified by name
     morpho = parse_morpho(wiki_section[0])
+    # the template with morphemes can be found by name
     segments = find_segments(wiki_section)
+    # return None if no such template is found
+    # because that's what we're trying to extract from the dump
     if not segments:
         return None
+    # convert template to Python dictionary
     segments = parse_segments(segments)
+    # sometimes this template is completely empty
+    # or filled with empty elements
+    # naturally, that's not very useful
     if not segments or len(segments) == 1 and segments["1"] == "":
         return None
     return {
@@ -131,6 +151,11 @@ def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
 
 
 def parse_template_page(wiki_text: WikiText) -> Union[dict, None]:
+    """
+    Convert the entire template page to a single dictionary.
+    :param wiki_text: parsed wiki text of a template page
+    :return: a dict or None
+    """
     templates = wiki_text.templates
     # in general, that shouldn't happen
     if not templates:
@@ -141,11 +166,20 @@ def parse_template_page(wiki_text: WikiText) -> Union[dict, None]:
     # are likely irrelevant
     if len(templates) > 1:
         return None
+    # templates attribute always return a list
+    # so we need to take out the only element
     template = templates[0]
     return {"template": template_to_dict(template)}
 
 
 def remove_no_include(raw_template_page: str) -> str:
+    """
+    wikitextparser can't parse templates with `<noinclude>`
+    tags in them. This function removes these tags and their
+    contents.
+    :param raw_template_page: unprocessed text body of a template page
+    :return: the same text body with tags removed
+    """
     pattern = re.compile(r"^<noinclude>.*?</noinclude>$")
     lines = raw_template_page.split("\n")
     output = []
@@ -156,7 +190,12 @@ def remove_no_include(raw_template_page: str) -> str:
 
 
 def template_to_dict(template: Template) -> dict:
+    """
+    A simple function to convert a parsed template into a dictionary.
+    :param template: parsed wiki template
+    :return: a dictionary with the contents of the template
+    """
     output = {}
     for arg in template.arguments:
-        output[arg.name.strip()] = arg.value.strip("\n")
+        output[arg.name.strip("\n").strip()] = arg.value.strip("\n")
     return output
