@@ -2,9 +2,15 @@ from typing import Union, Dict
 from timeit import default_timer as timer
 import requests
 
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup as Soup
 from bs4.element import Tag
+import pandas as pd
 
+from constants import NUMBER_MAP, CASE_MAP
+from src.utils.etc import clean_string
+
+
+# TODO parse template pages and pages for words that don't provide stems explicitly
 USER_AGENT = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                             'Chrome/74.0.3729.169 Safari/537.36'}
 
@@ -38,36 +44,59 @@ def get_url(title: str) -> str:
     return f"https://ru.wiktionary.org/wiki/{title}"
 
 
-def request_text(title):
+def request_text(title: str) -> str:
     url = get_url(title)
     html = requests.get(url, headers=USER_AGENT)
     return html.text
 
 
-def parse_noun_table(html: Tag) -> Dict[str, str]:
-    pass
-
-# def get_morpho_table(html: str) -> Union[pd.DataFrame, None]:
-#     try:
-#         # this is just the first meaning
-#         # homonymy is not considered at the moment
-#         table = pd.read_html(html, attrs={'class': 'morfotable ru'})[0]
-#         return table
-#     except ValueError:
-#         return None
+def prepare_html_table(table: Tag) -> str:
+    for br in table.find_all("br"):
+        br.replace_with("\n")
+    table = str(table).replace(u"\xa0", " ")
+    return table
 
 
-# def process_title(title: str) -> Union[pd.DataFrame, None]:
-#     html = request_text(title)
-#     table = get_morpho_table(html)
-#     return table.to_json()
+def parse_noun_table(table: Tag) -> Dict[str, str]:
+    table = prepare_html_table(table)
+    table = pd.read_html(table, flavor="bs4")[0]
+    table = table.rename(columns={**{"падеж": "case"}, **NUMBER_MAP}).set_index("case").rename(index=CASE_MAP)
+    return table_to_dict(table)
 
 
-# start = timer()
-# for word in TEST_WORDS[0]:
-#     print(word)
-#     print(process_title(word))
-#
-# end = timer()
-#
-# print("\n" + f"Time elapsed: {end - start:.4f}")
+def table_to_dict(df: pd.DataFrame) -> Dict[str, str]:
+    result = {}
+    for col in df.columns:
+        for index, item in df[col].items():
+            if " " in item:
+                item = item.split(" ")
+                item = [clean_string(option) for option in item]
+            else:
+                item = clean_string(item)
+            result[f"{index}-{col}"] = item
+    return result
+
+
+def get_morpho_table(html: str) -> Union[pd.DataFrame, None]:
+    # this is just the first meaning
+    # homonymy is not considered at the moment
+    table = pd.read_html(html, attrs={'class': 'morfotable ru'})[0]
+    return table
+
+
+def process_title(title: str) -> Union[Dict[str, str], None]:
+    html = request_text(title)
+    parsed = Soup(html, features="lxml").find_all(class_="morfotable ru")
+    if len(parsed) > 0:
+        table = parse_noun_table(parsed[0])
+        return table
+
+
+start = timer()
+for word in TEST_WORDS:
+    print(word)
+    print(process_title(word))
+
+end = timer()
+
+print("\n" + f"Time elapsed: {end - start:.4f}")
