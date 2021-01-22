@@ -201,3 +201,15 @@ def template_to_dict(template: Template) -> dict:
     for arg in template.arguments:
         output[arg.name.strip("\n").strip()] = arg.value.strip("\n")
     return output
+
+
+def is_vulgar(raw_wiki: str) -> bool:
+    """
+    Check whether a given page is marked as offensive.
+    :param raw_wiki: the entire page text as a string
+    :return: a boolean value
+    """
+    if "{off}" in raw_wiki or "{offensive}" in raw_wiki:
+        return True
+    else:
+        return False

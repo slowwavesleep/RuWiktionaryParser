@@ -13,7 +13,7 @@ from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
 from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template_page, \
-    remove_no_include
+    remove_no_include, is_vulgar
 
 assert cpu_count() > 4
 NUM_PROCESSES = 4
@@ -147,6 +147,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                     parsed_wiki_data["title"] = data.title
                     parsed_wiki_data["type"] = "article"
                     parsed_wiki_data["is_proper"] = data.is_proper
+                    parsed_wiki_data["is_vulgar"] = is_vulgar(data.raw_wiki)
 
                     out_conn.put(parsed_wiki_data)
         # Template class contains data from a page dedicated to a particular template
