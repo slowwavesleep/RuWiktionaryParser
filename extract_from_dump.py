@@ -152,6 +152,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
         # Template class contains data from a page dedicated to a particular template
         elif isinstance(data, Template):
             wiki_data = wtp.parse(remove_no_include(data.raw_wiki))
+
             if wiki_data:
                 parsed_wiki_data = parse_template_page(wiki_data)
                 if parsed_wiki_data:

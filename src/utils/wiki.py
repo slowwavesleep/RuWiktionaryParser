@@ -181,11 +181,12 @@ def remove_no_include(raw_template_page: str) -> str:
     :param raw_template_page: unprocessed text body of a template page
     :return: the same text body with tags removed
     """
-    pattern = re.compile(r"^<noinclude>.*?</noinclude>$")
+    pattern = re.compile(r"<noinclude>.*?</noinclude>")
     lines = raw_template_page.split("\n")
     output = []
     for line in lines:
-        if not bool(re.match(pattern, line)):
+        line = re.sub(pattern, "", line)
+        if line:
             output.append(line)
     return "\n".join(output)
 
