@@ -13,7 +13,7 @@ from src.data import Article, Template, TemplateRedirect
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
 from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template_page, \
-    remove_no_include, is_obscene
+    remove_no_include, is_obscene, has_ru_homonyms
 
 assert cpu_count() > 4
 NUM_PROCESSES = 4
@@ -140,7 +140,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
             # proceed if Russian language section is found
             if wiki_data:
                 # parse found section
-                parsed_wiki_data: Dict[str, Union[str, int, bool]] = parse_ru_section(wiki_data)
+                parsed_wiki_data = parse_ru_section(wiki_data)
                 # proceed if morphological information and segmentation data were found
                 if parsed_wiki_data:
                     parsed_wiki_data["id"] = data.id_
@@ -148,6 +148,7 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
                     parsed_wiki_data["type"] = "article"
                     parsed_wiki_data["is_proper"] = data.is_proper
                     parsed_wiki_data["is_obscene"] = is_obscene(data.raw_wiki)
+                    parsed_wiki_data["has_homonyms"] = has_ru_homonyms(data.raw_wiki)
 
                     out_conn.put(parsed_wiki_data)
         # Template class contains data from a page dedicated to a particular template

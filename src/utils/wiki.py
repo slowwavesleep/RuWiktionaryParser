@@ -5,7 +5,7 @@ from wikitextparser import Section, Template
 from wikitextparser import WikiText
 
 
-# TODO Consider synonymy, i.e. multiple sections for one word
+# TODO Consider homonymic forms, i.e. multiple sections for one word
 def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
     """
     Attempts to find Russian language section in a given
@@ -71,9 +71,15 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     args = temp.arguments
     stems = {arg.name.strip("\n").strip(): arg.value.strip("\n")
              for arg in args if "основа" in arg.name}
+    alternate = {}
+    # this information might still be useful
+    if not stems and len(args) > 1 and args[0].name.strip("\n").strip() == "1":
+        alternate["lemma"] = args[0].value.strip("\n").strip()
+        alternate["index"] = args[1].value.strip("\n").strip()
     return {
         "template": temp_name,
-        "stems": stems
+        "stems": stems,
+        "alternate": alternate
     }
 
 
@@ -113,7 +119,7 @@ def parse_segments(temp: Template) -> Union[Dict[str, str], None]:
     return segments
 
 
-def parse_ru_section(wiki_section: Section) -> Union[Dict[str, str], None]:
+def parse_ru_section(wiki_section: Section) -> Union[dict, None]:
     """
     Processes the entire Russian language section of an article.
     Return a dictionary with morphological information and morpheme segmentation.
@@ -213,3 +219,12 @@ def is_obscene(raw_wiki: str) -> bool:
         return True
     else:
         return False
+
+
+def has_ru_homonyms(raw_string: str) -> bool:
+    """
+    Checks whether a given page has Russian homonyms.
+    :param raw_string: the entire page text as a string
+    :return: a boolean value
+    """
+    return "{{Омонимы|ru" in raw_string

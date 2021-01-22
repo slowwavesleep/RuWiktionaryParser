@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 
 import wikitextparser as wtp
 
@@ -44,11 +45,29 @@ with open(WRITE_PATHS["article"]) as file:
 #         if "сущ ru n ina 5*a" in template["title"]:
 #             print(template)
 
+# homonyms = []
 # with open(WRITE_PATHS["article"]) as file:
 #     for line in file:
 #         article = json.loads(line)
-#         if 'сущ ru n ina 5*a((2))' in article["morpho"]["template"]:
-#             print(article)
+#         if article["has_homonyms"]:
+#             homonyms.append(article)
+#
+# pprint(homonyms[:10])
+
+# spec = []
+# with open(WRITE_PATHS["article"]) as file:
+#     for line in file:
+#         article = json.loads(line)
+#         if "сущ" in article["morpho"]["template"] and not article["morpho"]["stems"] and article["morpho"]["alternate"]:
+#             spec.append(article["morpho"]["alternate"]["index"])
+#
+# pprint((set(spec)))
+
+
+# with open(WRITE_PATHS["article"]) as file:
+#     for line in file:
+#         article = json.loads(line)
+#         if ""
 
 temps = set(temps)
 full_templates = set(full_templates)
