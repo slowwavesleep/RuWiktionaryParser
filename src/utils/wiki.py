@@ -203,7 +203,7 @@ def template_to_dict(template: Template) -> dict:
     return output
 
 
-def is_vulgar(raw_wiki: str) -> bool:
+def is_obscene(raw_wiki: str) -> bool:
     """
     Check whether a given page is marked as offensive.
     :param raw_wiki: the entire page text as a string

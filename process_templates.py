@@ -32,7 +32,7 @@ temps = []
 with open(WRITE_PATHS["article"]) as file:
     for line in file:
         article = json.loads(line)
-        if "сущ" in article["morpho"]["template"] and not article["is_proper"]:
+        if "сущ" in article["morpho"]["template"] and not article["is_proper"] and not article["is_obscene"]:
             if article["morpho"]["template"] in redirects:
                 temps.append(redirects[article["morpho"]["template"]])
             else:
@@ -56,11 +56,7 @@ broken_templates = set(broken_templates)
 
 
 missing = temps - (broken_templates | full_templates)
-# from pprint import pprint
-# pprint(full_templates)
 
-# with open(WRITE_PATHS["article"]) as file:
-#     for line in file:
-#         article = json.loads(line)
-#         if '<!' in article["morpho"]["template"]:
-#             print(article)
+print(len(missing))
+print(len(full_templates))
+print(len(broken_templates))
