@@ -4,8 +4,12 @@ import re
 from wikitextparser import Section, Template
 from wikitextparser import WikiText
 
+from constants import CASE_PRONOUN_MAP
+from src.utils.etc import clean_string
 
 # TODO Consider homonymic forms, i.e. multiple sections for one word
+
+
 def find_ru_section(wiki_text: WikiText) -> Union[Section, None]:
     """
     Attempts to find Russian language section in a given
@@ -60,6 +64,8 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     :param temp: an instance of wikitextparser Template class
     :return: a dictionary containing template name and stems
     """
+    alternate = {}
+    forms = {}
     temp_name = clean_template_name(temp.name)
     # some templates use some arcane script
     # to generate actual word forms, thus it's not
@@ -68,10 +74,12 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     # other templates generally have arguments with the
     # word `основа` in them, so if no such arguments were
     # found, then these words will be ignored further on
+    if temp_name == "падежи":
+        forms = parse_raw_cases(temp)
     args = temp.arguments
     stems = {arg.name.strip("\n").strip(): arg.value.strip("\n")
              for arg in args if "основа" in arg.name}
-    alternate = {}
+
     # this information might still be useful
     if not stems and len(args) > 1 and args[0].name.strip("\n").strip() == "1":
         alternate["lemma"] = args[0].value.strip("\n").strip()
@@ -79,8 +87,22 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     return {
         "template": temp_name,
         "stems": stems,
-        "alternate": alternate
+        "alternate": alternate,
+        "forms": forms
     }
+
+
+def parse_raw_cases(temp: Template) -> dict:
+    result = {}
+    args = temp.arguments
+    try:
+        for arg in args:
+            key = arg.name.strip("\n").strip()
+            value = clean_string(arg.value)
+            result[CASE_PRONOUN_MAP[key]] = value
+        return result
+    except KeyError:
+        return result
 
 
 def find_segments(templates: List[Template]) -> Union[Template, None]:

@@ -88,6 +88,7 @@ def replace_template_redirects(article: dict, template_redirects: Dict[str, str]
 
 
 def process_articles():
+    # invariable parts of speech
     # nouns with one stem and no "-"
     # nouns with multiple stems and no "-"
     # nouns with "-"

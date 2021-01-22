@@ -1,7 +1,7 @@
 from multiprocessing import Queue, Process, cpu_count
 from bz2 import BZ2File
 from lxml.etree import iterparse, Element
-from typing import Union, NoReturn, Dict
+from typing import Union, NoReturn
 from timeit import default_timer as timer
 import json
 
@@ -10,6 +10,7 @@ import wikitextparser as wtp
 from config import DUMP_PATH, PROCESS_TEMPLATES, PROCESS_ARTICLES
 from constants import WRITE_PATHS, BROKEN_ARTICLES
 from src.data import Article, Template, TemplateRedirect
+from src.utils.etc import empty_file
 from src.utils.xml import is_article_title_ru, is_template, is_template_title_ru, is_redirect, is_article, \
     is_article_title_proper, is_element_page, get_page_id, get_raw_wiki, get_page_title, get_redirect_title
 from src.utils.wiki import find_ru_section, parse_ru_section, clean_template_name, parse_template_page, \
@@ -179,14 +180,6 @@ def parse_wiki(in_conn: Queue, out_conn: Queue) -> NoReturn:
         # not interested in any other cases
         else:
             pass
-
-
-def empty_file(path: str) -> NoReturn:
-    """
-    Given a path creates an empty file
-    :param path: file path
-    """
-    open(path, "w").close()
 
 
 def write_result(paths: dict, conn: Queue) -> NoReturn:

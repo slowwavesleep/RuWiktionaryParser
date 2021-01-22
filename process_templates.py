@@ -9,7 +9,7 @@ from constants import WRITE_PATHS
 # however, it is not clear what is their purpose exactly
 
 # TODO generate word forms after processing all available templates
-
+from src.utils.etc import determine_pos
 
 redirects = {}
 with open(WRITE_PATHS["template_redirect"]) as file:
@@ -33,41 +33,14 @@ temps = []
 with open(WRITE_PATHS["article"]) as file:
     for line in file:
         article = json.loads(line)
+        pos = determine_pos(article)
+        if not pos:
+            print(article)
         if "сущ" in article["morpho"]["template"] and not article["is_proper"] and not article["is_obscene"]:
             if article["morpho"]["template"] in redirects:
                 temps.append(redirects[article["morpho"]["template"]])
             else:
                 temps.append(article["morpho"]["template"])
-
-# with open(WRITE_PATHS["template"]) as file:
-#     for line in file:
-#         template = json.loads(line)
-#         if "сущ ru n ina 5*a" in template["title"]:
-#             print(template)
-
-# homonyms = []
-# with open(WRITE_PATHS["article"]) as file:
-#     for line in file:
-#         article = json.loads(line)
-#         if article["has_homonyms"]:
-#             homonyms.append(article)
-#
-# pprint(homonyms[:10])
-
-# spec = []
-# with open(WRITE_PATHS["article"]) as file:
-#     for line in file:
-#         article = json.loads(line)
-#         if "сущ" in article["morpho"]["template"] and not article["morpho"]["stems"] and article["morpho"]["alternate"]:
-#             spec.append(article["morpho"]["alternate"]["index"])
-#
-# pprint((set(spec)))
-
-
-# with open(WRITE_PATHS["article"]) as file:
-#     for line in file:
-#         article = json.loads(line)
-#         if ""
 
 temps = set(temps)
 full_templates = set(full_templates)

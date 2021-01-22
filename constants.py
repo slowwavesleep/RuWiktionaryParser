@@ -15,40 +15,73 @@ BROKEN_ARTICLES: List[str] = [
     "ханьжа"
 ]
 
-INVARIABLE_POS = [
+INVARIABLE_POS: List[str] = [
     "adv",
-    "деепр"
+    "ger"
 ]
 
-POS_MAP = {
+POS_MAP: Dict[str, str] = {
     "сущ": "noun",
+    # "падежи": "сущ",
     "прил": "adj",
     "гл": "verb",
-    "adv": "adv"
+    "прич": "participle",
+    "деепр": "ger",
+    "adv": "adv",
+    "interj": "int",
+    "part": "particle",
+    "мест": "padj",  # possessive
+    "predic": "pred",
+    "conj": "conj",
+    "числ": "num",
+    "prep": "prep",
+    # not really parts of speech, it's just for consistency's sake
+    "Фам": "fam",
+    "собств.": "prop",  # proper name
+    "abbrev": "abbr",
+    "onomatop": "ono",
+    "intro": "par",  # parenthesis
+    "не так": "broken",  # ungrammatical, ignore this
 }
 
-CASE_MAP = {
+CASE_MAP: Dict[str, str] = {
     "Им.": "nom",
     "Р.": "gen",
     "Д.": "dat",
     "В.": "acc",
-    "Тв.": "gen",
+    "Тв.": "abl",
     "Пр.": "prp"
 }
 
-NUMBER_MAP = {
+CASE_PRONOUN_MAP: Dict[str, str] = {
+    "Кто/что? (ед)": "nom-sg",
+    "Кто/что? (мн)": "nom-pl",
+    "Нет кого/чего? (ед)": "gen-sg",
+    "Нет кого/чего? (мн)": "gen-pl",
+    "Кому/чему? (ед)": "dat-sg",
+    "Кому/чему? (мн)": "gat-pl",
+    "Кого/что? (ед)": "acc-sg",
+    "Кого/что? (мн)": "acc-pl",
+    "Кем/чем? (ед)": "abl-sg",
+    "Кем/чем? (мн)": "аbl-pl",
+    "О ком/чём? (ед)": "prp-sg",
+    "О ком/чём? (мн)": "prp-pl"
+}
+
+NUMBER_MAP: Dict[str, str] = {
     "ед. ч.": "sg",
     "мн. ч.": "pl"
 }
 
-GENDER_MAP = {
+GENDER_MAP: Dict[str, str] = {
     "муж. р.": "m",
     "ср. р.": "n",
     "жен. р.": "f"
 }
 
-
 ARTICLE_NAMESPACE: str = "0"
 TEMPLATE_NAMESPACE: str = "10"
-USER_AGENT = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                            'Chrome/74.0.3729.169 Safari/537.36'}
+
+USER_AGENT: Dict[str, str] = {
+    'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/74.0.3729.169 Safari/537.36'}
