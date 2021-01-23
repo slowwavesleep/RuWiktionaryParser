@@ -20,15 +20,21 @@ INVARIABLE_POS: List[str] = [
     "ger"
 ]
 
+IGNORE_POS: List[str] = [
+    "intrj",
+    "conj",
+    "fam"
+]
+
 POS_MAP: Dict[str, str] = {
     "сущ": "noun",
-    # "падежи": "сущ",
+    "падежи": "сущ",
     "прил": "adj",
     "гл": "verb",
     "прич": "participle",
     "деепр": "ger",
     "adv": "adv",
-    "interj": "int",
+    "interj": "intrj",
     "part": "particle",
     "мест": "padj",  # possessive
     "predic": "pred",

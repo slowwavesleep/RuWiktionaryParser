@@ -1,56 +1,38 @@
-from string import digits
-from typing import List, Union, Dict
+from typing import List, Union
 
-from src.utils.etc import clean_string
-
-
-def clean_segments(segments: dict) -> List[str]:
-    """
-    Transforms a raw segments dictionary into a list of cleaned segments.
-    :param segments: a raw segments dictionary
-    :return: a sorted list of segments
-    """
-    return [clean_string(value) for key, value in sorted(segments.items())
-            if key in digits and value]
+from src.segmentation import clean_segments
+from src.utils.etc import clean_string, determine_pos, basic_json_read, read_redirects, replace_redirect
+from constants import WRITE_PATHS, INVARIABLE_POS, IGNORE_POS
 
 
-def combined_len(segments: List[str]) -> int:
-    """
-    Simple function to check the total length of combined segments.
-    :param segments: a list of segments
-    :return: total amount of symbols
-    """
-    return sum(len(seg) for seg in segments)
-
-
-def segment_stem(stem: str, segments: dict) -> Union[List[str], None]:
-    """
-    Attempts to divide given stem into individual morphemes using morpheme division of a lemma.
-    :param stem: candidate word stem as a string
-    :param segments: a segmented lemma without additional processing, i.e. {"1": "seg_1", "2": "seg_2", ... "n": "seg_n"
-    :return: a list of stem segments or None
-    """
-    stem = clean_string(stem)
-    segments = clean_segments(segments)
-    whole_word = "".join(segments)
-    if len(stem) == combined_len(segments):
-        return segments
-    if whole_word.startswith(stem):
-        stem_segments = []
-        for seg in segments:
-            stem_segments.append(seg)
-            combined_seg = "".join(stem_segments)
-            if (stem == combined_seg
-                    or stem + "ь" == combined_seg
-                    or stem + "й" == combined_seg):
-                return stem_segments
-            elif combined_seg[-1] == "и" and stem == combined_seg[:-1]:
-                stem_segments[-1] = stem_segments[-1][:-1]
-                return stem_segments
-
-        print(f"Stem: `{stem}` did not match with segments in `{whole_word}`")
-    else:
-        print(f"Different stem: {stem} {whole_word}")
+# def segment_stem(stem: str, segments: dict) -> Union[List[str], None]:
+#     """
+#     Attempts to divide given stem into individual morphemes using morpheme division of a lemma.
+#     :param stem: candidate word stem as a string
+#     :param segments: a segmented lemma without additional processing, i.e. {"1": "seg_1", "2": "seg_2", ... "n": "seg_n"
+#     :return: a list of stem segments or None
+#     """
+#     stem = clean_string(stem)
+#     segments = clean_segments(segments)
+#     whole_word = "".join(segments)
+#     if len(stem) == combined_len(segments):
+#         return segments
+#     if whole_word.startswith(stem):
+#         stem_segments = []
+#         for seg in segments:
+#             stem_segments.append(seg)
+#             combined_seg = "".join(stem_segments)
+#             if (stem == combined_seg
+#                     or stem + "ь" == combined_seg
+#                     or stem + "й" == combined_seg):
+#                 return stem_segments
+#             elif combined_seg[-1] == "и" and stem == combined_seg[:-1]:
+#                 stem_segments[-1] = stem_segments[-1][:-1]
+#                 return stem_segments
+#
+#         print(f"Stem: `{stem}` did not match with segments in `{whole_word}`")
+#     else:
+#         print(f"Different stem: {stem} {whole_word}")
 
 
 def all_stems_filled(stems: dict) -> bool:
@@ -80,17 +62,29 @@ def some_stems_filled(stems: dict) -> bool:
         return False
 
 
-def replace_template_redirects(article: dict, template_redirects: Dict[str, str]) -> dict:
-    template_name = article["morpho"]["template"]
-    if template_name in template_redirects:
-        article["morpho"]["template"] = template_redirects[template_name]
-    return article
+def process_article(article, temps):
+    title = article["title"]
+    stems = article["morpho"]["stems"]
+    pos = determine_pos(article)
+    if pos in IGNORE_POS:
+        return None
+    if pos in INVARIABLE_POS:
+        cleaned_segments = {"invariable": clean_segments(article["segments"])}
+        print(cleaned_segments)
 
-
-def process_articles():
-    # invariable parts of speech
     # nouns with one stem and no "-"
+    if pos == "noun" and "-" not in article["title"] and len(stems) == 1:
+        pass
     # nouns with multiple stems and no "-"
     # nouns with "-"
     pass
 
+
+articles = basic_json_read(WRITE_PATHS["article"])
+templates = basic_json_read(WRITE_PATHS["template"])
+redirects = read_redirects(WRITE_PATHS["template_redirect"])
+
+articles = [replace_redirect(article, redirects) for article in articles]
+
+for article in articles:
+    process_article(article, templates)

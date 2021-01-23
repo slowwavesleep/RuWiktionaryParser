@@ -1,12 +1,12 @@
+import json
 import re
-from typing import NoReturn, Union
+from typing import NoReturn, Union, List
 from unicodedata import normalize
 
 from constants import POS_MAP
 
 
 def clean_string(seg: str) -> str:
-    # TODO Consider complex words with "-"
     """
     Removes all symbols not part of the Russian alphabet from a given string and
     converts all chars into their composed unicode form.
@@ -14,14 +14,14 @@ def clean_string(seg: str) -> str:
     :return: a cleaned string
     """
     # remove optional elements
-    seg = seg.strip("\n").strip()
+    seg: str = seg.strip("\n").strip()
     seg = re.sub(r"\(.*?\)", "", seg)
     # decompose string to filter out stress marks
     seg = normalize("NFD", seg)
     ru_letters = ({chr(ind) for ind in range(ord("а"), ord("я") + 1)}
                   | {chr(ind) for ind in range(ord("А"), ord("Я") + 1)}
                   | {"-"}
-                  | {"\u0308", "\u0306"}) # this is diacritical marks for letters `й` and `ё`
+                  | {"\u0308", "\u0306"})  # this is diacritical marks for letters `й` and `ё`
     seg = "".join(c for c in seg if c in ru_letters)
     # convert back to composed form
     return normalize("NFC", seg).strip("-")
@@ -36,12 +36,54 @@ def empty_file(path: str) -> NoReturn:
 
 
 def basic_filter(article: dict) -> bool:
-    return not article["is_proper"] and not article["is_obscene"]
+    return not (article["is_proper"] and article["is_obscene"])
 
 
-def determine_pos(article: dict) -> Union[str, None]:
-    template = article["morpho"].get("template")
+def determine_pos(page: dict, *, page_type: str = "article") -> Union[str, None]:
+    if page_type not in ("article", "template"):
+        raise ValueError
+    if page_type == "article":
+        template_name: str = page["morpho"].get("template")
+    else:
+        template_name: str = page["title"]
     for key in POS_MAP.keys():
-        if key in template:
+        if key in template_name:
             return POS_MAP[key]
 
+
+def replace_redirect(article: dict, redirects: dict) -> dict:
+    template_name: str = article["morpho"].get("template")
+    if template_name in redirects:
+        new_template = redirects[template_name]
+        article["morpho"]["template"] = new_template
+    return article
+
+
+def read_redirects(path: str) -> dict:
+    result: dict = {}
+    with open(path) as file:
+        for line in file:
+            cur_redir = json.loads(line)
+            result[cur_redir["title"]] = cur_redir["redirect_title"]
+    return result
+
+
+def basic_json_read(path: str) -> List[dict]:
+    result = []
+    with open(path) as file:
+        for line in file:
+            cur_elem = json.loads(line)
+            result.append(cur_elem)
+    return result
+
+
+def is_usable_template(template: dict):
+    pos = determine_pos(template, page_type="template")
+    if not template["template"]:
+        return False
+    else:
+        if pos == "noun" and "nom-sg" in template["template"]:
+            return True
+        # TODO extend for other parts of speech
+        else:
+            return False

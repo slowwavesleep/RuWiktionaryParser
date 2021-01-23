@@ -1,7 +1,4 @@
 import json
-from pprint import pprint
-
-import wikitextparser as wtp
 
 from constants import WRITE_PATHS
 
@@ -9,46 +6,39 @@ from constants import WRITE_PATHS
 # however, it is not clear what is their purpose exactly
 
 # TODO generate word forms after processing all available templates
-from src.utils.etc import determine_pos
+from src.utils.etc import determine_pos, basic_filter, read_redirects, replace_redirect, is_usable_template,\
+    basic_json_read
 
-redirects = {}
-with open(WRITE_PATHS["template_redirect"]) as file:
-    for line in file:
-        redirect = json.loads(line)
-        redirects[redirect["title"]] = redirect["redirect_title"]
+redirects = read_redirects(WRITE_PATHS["template_redirect"])
 
-full_templates = []
-broken_templates = []
-with open(WRITE_PATHS["template"]) as file:
-    for line in file:
-        template = json.loads(line)
-        if "сущ" in template["title"] and template["template"]:
-            if "nom-sg" in template["template"]:
-                full_templates.append(template["title"])
-            else:
-                broken_templates.append(template["title"])
+full_noun_templates = []
+broken_noun_templates = []
+
+noun_templates = basic_json_read(WRITE_PATHS["template"])
+
+for template in noun_templates:
+    if determine_pos(template, page_type="template") == "noun":
+        if is_usable_template(template):
+            full_noun_templates.append(template["title"])
+        else:
+            broken_noun_templates.append(template["title"])
 
 
-temps = []
+noun_article_templates = []
 with open(WRITE_PATHS["article"]) as file:
     for line in file:
         article = json.loads(line)
         pos = determine_pos(article)
-        if not pos:
-            print(article)
-        if "сущ" in article["morpho"]["template"] and not article["is_proper"] and not article["is_obscene"]:
-            if article["morpho"]["template"] in redirects:
-                temps.append(redirects[article["morpho"]["template"]])
-            else:
-                temps.append(article["morpho"]["template"])
+        if determine_pos(article) == "noun" and basic_filter(article):
+            noun_article_templates.append(replace_redirect(article, redirects)["morpho"]["template"])
 
-temps = set(temps)
-full_templates = set(full_templates)
-broken_templates = set(broken_templates)
+noun_article_templates = set(noun_article_templates)
+full_noun_templates = set(full_noun_templates)
+broken_noun_templates = set(broken_noun_templates)
 
 
-missing = temps - (broken_templates | full_templates)
+missing = noun_article_templates - (broken_noun_templates | full_noun_templates)
 
 print(len(missing))
-print(len(full_templates))
-print(len(broken_templates))
+print(len(full_noun_templates))
+print(len(broken_noun_templates))
