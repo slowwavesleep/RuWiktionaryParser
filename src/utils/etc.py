@@ -36,7 +36,7 @@ def empty_file(path: str) -> NoReturn:
 
 
 def basic_filter(article: dict) -> bool:
-    return not (article["is_proper"] and article["is_obscene"])
+    return not (article["is_proper"] or article["is_obscene"])
 
 
 def determine_pos(page: dict, *, page_type: str = "article") -> Union[str, None]:

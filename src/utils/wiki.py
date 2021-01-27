@@ -61,6 +61,8 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     """
     Extracts template name and stems for a given word from a
     parsed wikitext morphology template.
+    NB: returned stems generally contain diacritical marks and
+    are not normalized
     :param temp: an instance of wikitextparser Template class
     :return: a dictionary containing template name and stems
     """
@@ -76,19 +78,26 @@ def parse_morpho(temp: Template) -> Dict[str, Union[str, dict]]:
     # found, then these words will be ignored further on
     if temp_name == "падежи":
         forms = parse_raw_cases(temp)
-    args = temp.arguments
-    stems = {arg.name.strip("\n").strip(): arg.value.strip("\n")
-             for arg in args if "основа" in arg.name}
+    args = template_to_dict(temp)
+
+    stems = {}
+    info = {}
+    for key, value in args.items():
+        if "основа" in key:
+            stems[key] = value
+        else:
+            info[key] = value
 
     # this information might still be useful
-    if not stems and len(args) > 1 and args[0].name.strip("\n").strip() == "1":
-        alternate["lemma"] = args[0].value.strip("\n").strip()
-        alternate["index"] = args[1].value.strip("\n").strip()
+    if not stems and len(args) > 1 and "1" in args.keys() and "2" in args.keys():
+        alternate["lemma"] = args["1"]
+        alternate["index"] = args["2"]
     return {
         "template": temp_name,
         "stems": stems,
         "alternate": alternate,
-        "forms": forms
+        "forms": forms,
+        "info": info
     }
 
 
@@ -227,7 +236,7 @@ def template_to_dict(template: Template) -> dict:
     """
     output = {}
     for arg in template.arguments:
-        output[arg.name.strip("\n").strip()] = arg.value.strip("\n")
+        output[arg.name.strip("\n").strip()] = arg.value.strip("\n").strip()
     return output
 
 

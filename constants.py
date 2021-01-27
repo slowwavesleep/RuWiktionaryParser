@@ -7,6 +7,8 @@ WRITE_PATHS: Dict[str, str] = {
     "template_redirect": "tmp/template_redirects.json"
 }
 
+SEGMENT_SEPARATOR: str = "|"
+
 SPECIAL_TEMPLATES: List[str] = [
     "сущ-ru"
 ]
