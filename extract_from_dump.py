@@ -200,7 +200,7 @@ def write_result(paths: dict, conn: Queue) -> NoReturn:
         path = paths.get(data_type, None)
         if path:
             with open(path, "a") as file:
-                file.write(json.dumps(data) + "\n")
+                file.write(json.dumps(data, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":

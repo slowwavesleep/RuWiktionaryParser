@@ -2,9 +2,9 @@ from typing import Dict, List
 
 # TODO Move to config yaml
 WRITE_PATHS: Dict[str, str] = {
-    "template": "tmp/templates.json",
-    "article": "tmp/articles.json",
-    "template_redirect": "tmp/template_redirects.json"
+    "template": "tmp/templates.jsonl",
+    "article": "tmp/articles.jsonl",
+    "template_redirect": "tmp/template_redirects.jsonl"
 }
 
 SEGMENT_SEPARATOR: str = "|"
@@ -30,7 +30,7 @@ IGNORE_POS: List[str] = [
 
 POS_MAP: Dict[str, str] = {
     "сущ": "noun",
-    "падежи": "сущ",
+    # "падежи": "noun",
     "прил": "adj",
     "гл": "verb",
     "прич": "participle",
@@ -57,7 +57,7 @@ CASE_MAP: Dict[str, str] = {
     "Р.": "gen",
     "Д.": "dat",
     "В.": "acc",
-    "Тв.": "abl",
+    "Тв.": "ins",
     "Пр.": "prp"
 }
 
@@ -70,8 +70,8 @@ CASE_PRONOUN_MAP: Dict[str, str] = {
     "Кому/чему? (мн)": "gat-pl",
     "Кого/что? (ед)": "acc-sg",
     "Кого/что? (мн)": "acc-pl",
-    "Кем/чем? (ед)": "abl-sg",
-    "Кем/чем? (мн)": "аbl-pl",
+    "Кем/чем? (ед)": "ins-sg",
+    "Кем/чем? (мн)": "ins-pl",
     "О ком/чём? (ед)": "prp-sg",
     "О ком/чём? (мн)": "prp-pl"
 }
