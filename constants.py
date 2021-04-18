@@ -7,6 +7,8 @@ WRITE_PATHS: Dict[str, str] = {
     "template_redirect": "tmp/template_redirects.jsonl"
 }
 
+PROCESSED_DIR = "tmp/processed/"
+
 SEGMENT_SEPARATOR: str = "|"
 
 SPECIAL_TEMPLATES: List[str] = [
@@ -86,6 +88,37 @@ GENDER_MAP: Dict[str, str] = {
     "ср. р.": "n",
     "жен. р.": "f"
 }
+
+VERB_FORM_MAP = {
+    "Я": "sfp-present",
+    "Я (прош.)": "sg-fp-past",
+    "Мы": "pl-fp-present",
+    "Мы (прош.)": "pl-fp-past",
+    "Ты": "sg-sp-present",
+    "Ты (прош.)": "sg-sp-past",
+    "Ты (повел.)": "sg-sp-imperative",
+    "Вы": "pl-sp-present",
+    "Вы (прош.)": "pl-sp-past",
+    "Вы (повел.)": "pl-sp-imperative",
+    "Он/она/оно": "sg-tp-mfn-present",
+    "Он/она/оно (прош.)": "sg-tp-mfn-past",
+    "Они": "pl-tp-present",
+    "Они (прош.)": "pl-tp-past",
+    "ПричНаст": "participle-present",
+    "ПричПрош": "participle-past",
+    "ДеепрНаст": "ger-present",
+    "ДеепрПрош": "ger-past",
+    "ПричСтрад": "ger-present-passive",
+    "ПричСтрадПрош": "get-past-passive",
+    "Будущее": "future"
+
+}
+
+VERB_TP = [
+    "sg-tp-m-past",
+    "sg-tp-f-past",
+    "sg-tp-n-past"
+]
 
 ARTICLE_NAMESPACE: str = "0"
 TEMPLATE_NAMESPACE: str = "10"
