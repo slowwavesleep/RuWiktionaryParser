@@ -84,6 +84,8 @@ def is_usable_template(template: dict):
     else:
         if pos == "noun" and "nom-sg" in template["template"]:
             return True
+        # elif pos == "verb" and "Я" in template["template"]:
+        #     return True
         # TODO extend for other parts of speech
         else:
             return False
