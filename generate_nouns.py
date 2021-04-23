@@ -1,29 +1,9 @@
 from typing import List, Dict
 import json
 
-from src.generation import segment_stem
-from src.segmentation import clean_segments
+from src.segmentation import remove_duplicate_seps
 from src.utils.etc import determine_pos, basic_json_read, read_redirects, replace_redirect, basic_filter
-from constants import WRITE_PATHS, INVARIABLE_POS, IGNORE_POS, SEGMENT_SEPARATOR
-
-
-def process_article(article, temps, *, sep: str = SEGMENT_SEPARATOR):
-    title = article["title"]
-    stems = article["morpho"]["stems"]
-    pos = determine_pos(article)
-    if pos in IGNORE_POS:
-        return {}
-    if pos in INVARIABLE_POS:
-        segmented_forms = {"lemma": clean_segments(article["segments"])}
-        return segmented_forms
-    # nouns with one stem
-    if pos == "noun" and len(stems) == 1:
-        segments = clean_segments(article["segments"])
-        stem = list(stems.values())[0]
-        print(title)
-        print(segment_stem(stem, segments))
-    elif len(stems) > 1:
-        pass
+from constants import WRITE_PATHS
 
 
 def map_templates(temps: List[dict]) -> Dict[str, dict]:
@@ -54,6 +34,6 @@ with open("result/processed_articles.jsonl", "w") as file:
                     for form, temp in form_templates.items():
                         for name, value in stems.items():
                             if name in temp.keys():
-                                generated_forms[form] = f"{value}{temp[name]}"
+                                generated_forms[form] = remove_duplicate_seps(f"{value}{temp[name]}")
                     article["generated_forms"] = generated_forms
                     file.write(json.dumps(article, ensure_ascii=False) + "\n")

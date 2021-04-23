@@ -14,3 +14,18 @@ def clean_segments(segments: dict, *, sep: str = SEGMENT_SEPARATOR) -> str:
     return sep.join(clean_string(value)
                     for key, value in sorted(segments.items())
                     if key in digits and value)
+
+
+def remove_duplicate_seps(segmented_string: str, *, sep: str = SEGMENT_SEPARATOR):
+    sep_flag = False
+    filtered = []
+    for c in segmented_string:
+        if c != sep:
+            filtered.append(c)
+            if sep_flag:
+                sep_flag = False
+        else:
+            if not sep_flag:
+                sep_flag = True
+                filtered.append(c)
+    return "".join(filtered)

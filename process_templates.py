@@ -9,7 +9,8 @@ from constants import WRITE_PATHS, SEGMENT_SEPARATOR, PROCESSED_DIR
 # however, it is not clear what is their purpose exactly
 
 # TODO generate word forms after processing all available templates
-from src.utils.etc import determine_pos, basic_filter, read_redirects, replace_redirect, is_usable_template, \
+from src.segmentation import remove_duplicate_seps
+from src.utils.etc import determine_pos, read_redirects, is_usable_template, \
     basic_json_read, clean_string
 
 
@@ -44,21 +45,6 @@ def process_template(template_page: dict):
                 if pos == "noun":
                     result[key] = separate_form_template(value[0])
     return result
-
-
-def remove_duplicate_seps(segmented_string: str, *, sep: str = SEGMENT_SEPARATOR):
-    sep_flag = False
-    filtered = []
-    for c in segmented_string:
-        if c != sep:
-            filtered.append(c)
-            if sep_flag:
-                sep_flag = False
-        else:
-            if not sep_flag:
-                sep_flag = True
-                filtered.append(c)
-    return "".join(filtered)
 
 
 def process_ending_noun(ending, *, sep: str = SEGMENT_SEPARATOR):
