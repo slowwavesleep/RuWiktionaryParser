@@ -20,3 +20,4 @@ python process_articles.py
 ```
 python generate_nouns.py
 ```
+As a result there should be over 500 thousand word forms.
