@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Tuple
+from typing import Tuple, Optional
 import pathlib
 
 from constants import WRITE_PATHS, SEGMENT_SEPARATOR, PROCESSED_DIR
@@ -13,7 +13,7 @@ from src.utils.etc import determine_pos, basic_filter, read_redirects, replace_r
     basic_json_read, clean_string
 
 
-def separate_form_template(form_template: str) -> Tuple[str, str]:
+def separate_form_template(form_template: str) -> Optional[Tuple[str, str]]:
     ending = re.findall(r"[^\}]+$", form_template)
     if ending:
         ending = ending[0]
@@ -26,7 +26,7 @@ def separate_form_template(form_template: str) -> Tuple[str, str]:
         return stem_name[0], clean_string(ending)
 
 
-def process_template(template_page):
+def process_template(template_page: dict):
     pos = determine_pos(template_page, page_type="template")
     result = {}
     for key, value in template_page["template"].items():
@@ -46,7 +46,7 @@ def process_template(template_page):
     return result
 
 
-def remove_duplicate_seps(segmented_string, sep):
+def remove_duplicate_seps(segmented_string: str, *, sep: str = SEGMENT_SEPARATOR):
     sep_flag = False
     filtered = []
     for c in segmented_string:
@@ -117,7 +117,7 @@ def process_ending(ending: str, pos: str, *, sep: str = SEGMENT_SEPARATOR) -> st
     if len(ending) > 2 and ending[-2:] in ("ся", "сь"):
         ending = ending[:-2] + sep + ending[-2:]
 
-    ending = remove_duplicate_seps(ending, sep)
+    ending = remove_duplicate_seps(ending, sep=sep)
 
     return ending
 
@@ -141,28 +141,9 @@ with open(destination / "templates.jsonl", "w") as file:
                 temp = process_template(template)
                 final_temp = {}
                 for key, value in temp.items():
-                    final_temp[key] = (value[0], process_ending(value[1], "noun"))
-                file.write(json.dumps({"id": template_id,
-                                       "title": template_title,
-                                       "template": final_temp}, ensure_ascii=False) + "\n")
+                    final_temp[key] = {value[0]: process_ending(value[1], "noun")}
+                if final_temp:
+                    file.write(json.dumps({"id": template_id,
+                                           "title": template_title,
+                                           "template": final_temp}, ensure_ascii=False) + "\n")
 
-
-
-# noun_article_templates = []
-# with open(WRITE_PATHS["article"]) as file:
-#     for line in file:
-#         article = json.loads(line)
-#         pos = determine_pos(article)
-#         if determine_pos(article) == "noun" and basic_filter(article):
-#             noun_article_templates.append(replace_redirect(article, redirects)["morpho"]["template"])
-#
-# noun_article_templates = set(noun_article_templates)
-# full_noun_templates = set(full_noun_templates)
-# broken_noun_templates = set(broken_noun_templates)
-#
-#
-# missing = noun_article_templates - (broken_noun_templates | full_noun_templates)
-#
-# print(len(missing))
-# print(len(full_noun_templates))
-# print(len(broken_noun_templates))
