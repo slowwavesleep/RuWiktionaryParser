@@ -4,14 +4,11 @@ from typing import Tuple, Optional
 import pathlib
 
 from constants import WRITE_PATHS, SEGMENT_SEPARATOR, PROCESSED_DIR
+from src.segmentation import remove_duplicate_seps
+from src.utils.etc import determine_pos, read_redirects, is_usable_template, basic_json_read, clean_string
 
 # question marks at the end of templates are probably safe to remove in articles
 # however, it is not clear what is their purpose exactly
-
-# TODO generate word forms after processing all available templates
-from src.segmentation import remove_duplicate_seps
-from src.utils.etc import determine_pos, read_redirects, is_usable_template, \
-    basic_json_read, clean_string
 
 
 def separate_form_template(form_template: str) -> Optional[Tuple[str, str]]:
