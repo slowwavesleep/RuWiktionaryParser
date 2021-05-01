@@ -125,7 +125,8 @@ python process_articles.py
 The results of the last two steps will be saved in `tmp/processed/` folder by default.
 
 #### Generate the segmented noun word forms
-This will use the processed files to generate word forms (where possible).
+This will use the processed files to generate word forms (where possible). Obscene words
+and proper names are not used.
 ```
 python generate_nouns.py
 ```
